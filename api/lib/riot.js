@@ -24,7 +24,8 @@ async function req(method, url, body, cookies, extraHeaders) {
   return { status: r.status, data };
 }
 
-/* returns fresh tokens from a riot ssid cookie; throws if expired/invalid */
+/* returns fresh tokens from a riot ssid cookie; throws if expired/invalid.
+   also captures a rotated ssid from riot's set-cookie if present. */
 async function cookieReauth(ssid) {
   const params = new URLSearchParams({
     client_id: "play-valorant-web-prod",
@@ -43,8 +44,15 @@ async function cookieReauth(ssid) {
   const fp = new URLSearchParams(frag);
   const accessToken = fp.get("access_token");
   if (!accessToken) throw new Error("ssid expired or invalid — log into riot in your browser and paste a fresh one");
+  // riot may rotate the ssid — capture the new one from set-cookie
+  let newSsid = "";
+  const setCookie = r.headers.get("set-cookie") || "";
+  const m = setCookie.match(/(?:^|,\s*)ssid=([^;,]+)/i);
+  if (m && m[1] && m[1] !== ssid) newSsid = m[1];
   const expiresIn = parseInt(fp.get("expires_in") || "3600", 10);
-  return finishAuth(accessToken, expiresIn);
+  const auth = await finishAuth(accessToken, expiresIn);
+  if (newSsid) auth.newSsid = newSsid;
+  return auth;
 }
 
 async function finishAuth(accessToken, expiresIn) {

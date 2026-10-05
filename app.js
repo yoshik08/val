@@ -22,6 +22,11 @@ async function call(path, opts) {
   let r;
   try { r = await fetch(API() + path, { ...opts, headers, body }); }
   catch (e) { throw new Error("api unreachable"); }
+  // riot may rotate the ssid — save the new one
+  try {
+    const newSsid = r.headers.get("x-new-ssid");
+    if (newSsid) ssidSet(newSsid);
+  } catch (e) {}
   let d = null;
   try { d = await r.json(); } catch (e) {}
   if (!r.ok) throw new Error((d && d.error) || ("request failed: " + r.status));
@@ -54,8 +59,10 @@ async function refreshStatus() {
       $("disconnect-btn").classList.remove("hidden");
       loadShop(); loadMatch();
     } else {
+      const had = ssidGet();
       ssidClear();
       $("login-sec").classList.remove("hidden");
+      if (had) $("login-err").textContent = "session expired — paste a fresh ssid cookie";
     }
   } catch (e) { $("login-err").textContent = e.message; }
 }

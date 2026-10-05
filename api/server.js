@@ -6,7 +6,11 @@ const riot = require("./lib/riot");
 const val = require("./lib/val");
 
 const app = express();
-app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : true }));
+// allow both the main domain and the val subdomain
+const corsOrigins = (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : [])
+  .concat(["https://yoshik.xyz", "https://val.yoshik.xyz"])
+  .map(s => s.trim()).filter(Boolean);
+app.use(cors({ origin: [...new Set(corsOrigins)], exposedHeaders: ["x-new-ssid"] }));
 app.use(express.json({ limit: "100kb" }));
 
 // local-only mode: serve the frontend from the backend (single process)
@@ -44,7 +48,7 @@ async function getTokens(ssid) {
 
 const ssidOf = (req) => str(req.headers["x-ssid"] || "", 2000).trim();
 
-async function withTokens(req, fn) {
+async function withTokens(req, res, fn) {
   const ssid = ssidOf(req);
   let t;
   try {
@@ -54,12 +58,20 @@ async function withTokens(req, fn) {
     er.code = 401;
     throw er;
   }
+  // if riot rotated the ssid, tell the client to save the new one
+  if (t.newSsid && res) {
+    res.setHeader("x-new-ssid", t.newSsid);
+    // update cache key so future requests use the fresh ssid
+    tokenCache.delete(hash(ssid));
+    tokenCache.set(hash(t.newSsid), { tokens: t });
+  }
   try {
     return await fn(t);
   } catch (e) {
     if (e.code === "TOKEN_EXPIRED") {
       tokenCache.delete(hash(ssid));
       t = await getTokens(ssid);
+      if (t.newSsid && res) res.setHeader("x-new-ssid", t.newSsid);
       return await fn(t);
     }
     throw e;
@@ -96,7 +108,7 @@ app.get("/api/shop", async (req, res) => {
     const h = hash(ssidOf(req));
     const c = shopCache.get(h);
     if (c && Date.now() - c.at < 5 * 60 * 1000) return res.json(c.data);
-    const data = await withTokens(req, (t) => val.getShop(t));
+    const data = await withTokens(req, res, (t) => val.getShop(t));
     shopCache.set(h, { at: Date.now(), data });
     res.json(data);
   } catch (e) {
@@ -111,7 +123,7 @@ app.get("/api/match", async (req, res) => {
     const h = hash(ssidOf(req));
     const c = matchCache.get(h);
     if (c && Date.now() - c.at < 30 * 1000) return res.json(c.data);
-    const data = await withTokens(req, (t) => val.getMatch(t));
+    const data = await withTokens(req, res, (t) => val.getMatch(t));
     matchCache.set(h, { at: Date.now(), data });
     res.json(data);
   } catch (e) {
