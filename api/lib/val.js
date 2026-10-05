@@ -32,7 +32,11 @@ async function getSkins() {
     const icon = s.displayIcon
       || (s.chromas && s.chromas[0] && (s.chromas[0].fullRender || s.chromas[0].displayIcon))
       || (s.levels && s.levels[0] && s.levels[0].displayIcon) || "";
-    map[s.uuid] = { name: s.displayName, icon, weapon: weaponOf[s.uuid] || "" };
+    const info = { name: s.displayName, icon, weapon: weaponOf[s.uuid] || "" };
+    map[s.uuid] = info;
+    // storefront returns level/chroma uuids — map them back to the parent skin
+    for (const l of s.levels || []) if (l.uuid) map[l.uuid] = info;
+    for (const c of s.chromas || []) if (c.uuid) map[c.uuid] = info;
   }
   skinCache = map; skinCacheAt = Date.now();
   return map;
@@ -75,19 +79,13 @@ async function getShop(t) {
     const reward = (o.Rewards || [])[0];
     if (reward) skinOf[o.OfferID] = reward.ItemID;
   }
-  // TEMP DEBUG: expose raw structure
-  const dbgOffers = (layout.SingleItemStoreOffers || []).map(o => ({
-    offerID: o.OfferID,
-    rewards: (o.Rewards || []).map(rw => ({ itemID: rw.ItemID, typeID: rw.ItemTypeID })),
-  }));
   const skins = await getSkins();
-  const sampleSkinKeys = Object.keys(skins).slice(0, 3);
   const offers = offerIds.map((id) => {
     const skinId = skinOf[id] || id;
     const s = skins[skinId] || {};
     return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", price: prices[id] };
   });
-  return { offers, expiresIn, fetchedAt: Date.now(), _debug: { dbgOffers, sampleSkinKeys, singleItemOffers: offerIds } };
+  return { offers, expiresIn, fetchedAt: Date.now() };
 }
 
 /* current match: pregame (agent select) then core-game (live) */
