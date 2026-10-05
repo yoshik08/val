@@ -59,7 +59,7 @@ async function headers(t) {
 }
 
 async function getShop(t) {
-  const r = await fetch(`https://pd.${SHARD}.a.pvp.net/store/v3/storefront/${t.puuid}`, { headers: await headers(t) });
+  const r = await fetch(`https://pd.${SHARD}.a.pvp.net/store/v2/storefront/${t.puuid}`, { headers: await headers(t) });
   if (r.status === 401) { const e = new Error("token expired"); e.code = "TOKEN_EXPIRED"; throw e; }
   if (!r.ok) throw new Error("storefront failed: " + r.status);
   const d = await r.json();
