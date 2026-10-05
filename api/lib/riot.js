@@ -77,7 +77,7 @@ async function login(username, password, cookies) {
 }
 
 async function submitMfa(cookies, code) {
-  const { status, data } = await req("PUT", AUTH_URL, { type: "multifactor", code: String(code).trim(), remember: true }, cookies);
+  const { status, data } = await req("PUT", AUTH_URL, { type: "multifactor", code: String(code).trim(), rememberDevice: true }, cookies);
   if (data && data.type === "response") {
     const { accessToken, idToken, expiresIn } = extractToken(data.response.parameters.uri);
     if (!accessToken) throw new Error("no access token after mfa");

@@ -89,11 +89,17 @@ async function loadMatch() {
     if (!m.inGame) {
       el.innerHTML = `<p class="dim">not in a match right now.</p>`;
     } else if (m.phase === "pregame") {
-      el.innerHTML = `<div class="live"><h3>agent select</h3><p class="meta">picking agents…</p></div>`;
+      const mates = (m.teammates || []).map((p) =>
+        `<div>${esc(p.name)}${p.agent ? ` <span class="dim">· ${esc(p.agent)}</span>` : ""}</div>`).join("");
+      el.innerHTML = `<div class="live"><h3>agent select</h3>` +
+        `<p class="meta">${esc(m.map)}${m.mode ? " · " + esc(m.mode) : ""}${m.myAgent ? " · you: " + esc(m.myAgent) : ""}</p>` +
+        (mates ? `<div class="meta" style="margin-top:8px">team:<br>${mates}</div>` : "") + `</div>`;
     } else {
-      el.innerHTML = `<div class="live"><h3>${esc(m.map)} · ${esc(m.mode)}</h3>` +
-        `<div class="score"><span class="us">${m.scoreUs}</span> — ${m.scoreThem}</div>` +
-        `<p class="meta">round ${m.round}${m.agent ? " · playing " + esc(m.agent) : ""}</p></div>`;
+      const mates = (m.teammates || []).map((p) =>
+        `<div>${esc(p.name)}${p.agent ? ` <span class="dim">· ${esc(p.agent)}</span>` : ""}</div>`).join("");
+      el.innerHTML = `<div class="live"><h3>${esc(m.map)}${m.mode ? " · " + esc(m.mode) : ""}</h3>` +
+        (m.myAgent ? `<p class="meta">you: ${esc(m.myAgent)}</p>` : "") +
+        (mates ? `<div class="meta" style="margin-top:8px">team:<br>${mates}</div>` : "") + `</div>`;
     }
     const now = new Date();
     $("match-refresh").textContent = "updated " + now.toLocaleTimeString();
