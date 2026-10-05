@@ -87,9 +87,11 @@ async function getShop(t) {
   const offers = offerIds.map((id) => {
     const skinId = skinOf[id] || id;
     const s = skins[skinId] || {};
-    // fallback chain: parent icon -> level icon -> full render
-    const fallbacks = [s.levelIcon, s.fullRender].filter(u => u && u !== s.icon);
-    return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", fallbacks, price: prices[id] };
+    // prefer the level-specific icon (exact item in shop), then full render,
+    // then parent icon — one specific parent png is broken in chrome
+    const primary = s.levelIcon || s.icon;
+    const fallbacks = [s.icon, s.fullRender].filter(u => u && u !== primary);
+    return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: primary, fallbacks, price: prices[id] };
   });
   return { offers, expiresIn, fetchedAt: Date.now() };
 }
