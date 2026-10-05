@@ -15,6 +15,8 @@ $("theme-btn").onclick = () => {
 async function call(path, opts) {
   opts = opts || {};
   const headers = { ...(opts.headers || {}) };
+  const ssid = ssidGet();
+  if (ssid) headers["x-ssid"] = ssid;
   let body = opts.body;
   if (body && typeof body === "object") { headers["Content-Type"] = "application/json"; body = JSON.stringify(body); }
   let r;
@@ -26,8 +28,20 @@ async function call(path, opts) {
   return d;
 }
 
+/* ssid lives in browser localstorage only — never stored on the server */
+function ssidGet() {
+  try { return localStorage.getItem("val-ssid") || ""; } catch (e) { return ""; }
+}
+function ssidSet(v) {
+  try { localStorage.setItem("val-ssid", v); } catch (e) {}
+}
+function ssidClear() {
+  try { localStorage.removeItem("val-ssid"); } catch (e) {}
+}
+
 
 async function refreshStatus() {
+  if (!ssidGet()) { $("login-sec").classList.remove("hidden"); return; }
   try {
     const s = await call("/api/status");
     if (s.connected) {
@@ -40,6 +54,7 @@ async function refreshStatus() {
       $("disconnect-btn").classList.remove("hidden");
       loadShop(); loadMatch();
     } else {
+      ssidClear();
       $("login-sec").classList.remove("hidden");
     }
   } catch (e) { $("login-err").textContent = e.message; }
@@ -51,12 +66,13 @@ $("connect-btn").onclick = async () => {
   if (!ssid) { $("login-err").textContent = "paste your ssid cookie first"; return; }
   try {
     await call("/api/connect", { method: "POST", body: { ssid } });
+    ssidSet(ssid);
     location.reload();
   } catch (e) { $("login-err").textContent = e.message; }
 };
 
 $("disconnect-btn").onclick = async () => {
-  await call("/api/disconnect", { method: "POST" });
+  ssidClear();
   location.reload();
 };
 

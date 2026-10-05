@@ -1,8 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { getDb } = require("./lib/db");
-const { enc, dec } = require("./lib/crypto");
+const crypto = require("crypto");
 const riot = require("./lib/riot");
 const val = require("./lib/val");
 
@@ -17,42 +16,50 @@ if (LOCAL_MODE) {
   app.get("/val", (req, res) => res.sendFile(path.join(__dirname, "..", "index.html")));
 }
 
-const str = (v, n) => (typeof v === "string" ? v.slice(0, n || 500) : "");
-const coll = async () => (await getDb()).collection("auth");
+const str = (v, n) => (typeof v === "string" ? v.slice(0, n || 2000) : "");
 
-/* ---------- token management ---------- */
-async function getTokens() {
-  const doc = await (await coll()).findOne({ _id: "riot" });
-  if (!doc) return null;
-  const t = doc.tokens;
-  if (!t || !t.accessToken) return null;
-  if (t.expiresAt && t.expiresAt < Date.now()) {
-    // re-auth silently with stored ssid cookie
-    try {
-      const ssid = dec(doc.ssid);
-      const tokens = await riot.cookieReauth(ssid);
-      await (await coll()).updateOne({ _id: "riot" }, { $set: { tokens, updatedAt: new Date() } });
-      return tokens;
-    } catch (e) {
-      console.log("re-auth failed:", e.message);
-      return null;
-    }
+/* ---------- token management (in-memory only, nothing persisted) ---------- */
+// cache tokens per ssid so we don't re-auth on every request
+const tokenCache = new Map(); // hash(ssid) -> { tokens, ssid }
+const hash = (s) => crypto.createHash("sha256").update(s).digest("hex").slice(0, 16);
+
+async function getTokens(ssid) {
+  ssid = str(ssid, 2000).trim();
+  if (!ssid) { const e = new Error("not connected"); e.code = 401; throw e; }
+  const h = hash(ssid);
+  const cached = tokenCache.get(h);
+  if (cached && cached.tokens.expiresAt && cached.tokens.expiresAt > Date.now()) {
+    return cached.tokens;
   }
-  return t;
+  // (re)auth with the ssid cookie — never stored
+  const tokens = await riot.cookieReauth(ssid);
+  tokenCache.set(h, { tokens });
+  // prune old entries
+  if (tokenCache.size > 50) {
+    const first = tokenCache.keys().next().value;
+    tokenCache.delete(first);
+  }
+  return tokens;
 }
 
-async function withTokens(fn) {
-  let t = await getTokens();
-  if (!t) { const e = new Error("not connected"); e.code = 401; throw e; }
-  
+const ssidOf = (req) => str(req.headers["x-ssid"] || "", 2000).trim();
+
+async function withTokens(req, fn) {
+  const ssid = ssidOf(req);
+  let t;
+  try {
+    t = await getTokens(ssid);
+  } catch (e) {
+    const er = new Error(e.message || "not connected");
+    er.code = 401;
+    throw er;
+  }
   try {
     return await fn(t);
   } catch (e) {
     if (e.code === "TOKEN_EXPIRED") {
-      // force refresh and retry once
-      await (await coll()).updateOne({ _id: "riot" }, { $set: { "tokens.expiresAt": 0 } });
-      t = await getTokens();
-      if (!t) { const er = new Error("session expired"); er.code = 401; throw er; }
+      tokenCache.delete(hash(ssid));
+      t = await getTokens(ssid);
       return await fn(t);
     }
     throw e;
@@ -62,59 +69,55 @@ async function withTokens(fn) {
 /* ---------- routes ---------- */
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
+// validate an ssid without storing anything
 app.post("/api/connect", async (req, res) => {
   try {
-    const ssid = str(req.body.ssid, 2000).trim();
+    const ssid = str(req.body.ssid, 2000).trim() || ssidOf(req);
     if (!ssid) return res.status(400).json({ error: "ssid cookie required" });
     const tokens = await riot.cookieReauth(ssid);
-    await (await coll()).updateOne(
-      { _id: "riot" },
-      { $set: { ssid: enc(ssid), tokens, updatedAt: new Date() } },
-      { upsert: true }
-    );
+    tokenCache.set(hash(ssid), { tokens });
     res.json({ ok: true, gameName: tokens.gameName, tagLine: tokens.tagLine });
   } catch (e) {
-    console.log("connect failed:", e.message);
-    res.status(401).json({ error: e.message.slice(0, 160) });
+    res.status(401).json({ error: (e.message || "auth failed").slice(0, 160) });
   }
 });
 
 app.get("/api/status", async (req, res) => {
   try {
-    const t = await getTokens();
-    if (!t) return res.json({ connected: false });
+    const t = await getTokens(ssidOf(req));
     res.json({ connected: true, gameName: t.gameName, tagLine: t.tagLine });
   } catch (e) { res.json({ connected: false }); }
 });
 
-app.post("/api/disconnect", async (req, res) => {
-  await (await coll()).deleteOne({ _id: "riot" });
-  res.json({ ok: true });
-});
-
-let shopCache = null;
+// per-ssid shop cache (5 min) — memory only
+const shopCache = new Map();
 app.get("/api/shop", async (req, res) => {
   try {
-    if (shopCache && Date.now() - shopCache.at < 5 * 60 * 1000) return res.json(shopCache.data);
-    const data = await withTokens((t) => val.getShop(t));
-    shopCache = { at: Date.now(), data };
+    const h = hash(ssidOf(req));
+    const c = shopCache.get(h);
+    if (c && Date.now() - c.at < 5 * 60 * 1000) return res.json(c.data);
+    const data = await withTokens(req, (t) => val.getShop(t));
+    shopCache.set(h, { at: Date.now(), data });
     res.json(data);
   } catch (e) {
-    res.status(e.code || 500).json({ error: e.message.slice(0, 200) });
+    res.status(e.code || 500).json({ error: (e.message || "failed").slice(0, 200) });
   }
 });
 
-let matchCache = null;
+// per-ssid match cache (30 sec) — memory only
+const matchCache = new Map();
 app.get("/api/match", async (req, res) => {
   try {
-    if (matchCache && Date.now() - matchCache.at < 30 * 1000) return res.json(matchCache.data);
-    const data = await withTokens((t) => val.getMatch(t));
-    matchCache = { at: Date.now(), data };
+    const h = hash(ssidOf(req));
+    const c = matchCache.get(h);
+    if (c && Date.now() - c.at < 30 * 1000) return res.json(c.data);
+    const data = await withTokens(req, (t) => val.getMatch(t));
+    matchCache.set(h, { at: Date.now(), data });
     res.json(data);
   } catch (e) {
-    res.status(e.code || 500).json({ error: e.message.slice(0, 200) });
+    res.status(e.code || 500).json({ error: (e.message || "failed").slice(0, 200) });
   }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("val api on :" + PORT));
+app.listen(PORT, () => console.log("val api on :" + PORT + (LOCAL_MODE ? " (local mode)" : "")));

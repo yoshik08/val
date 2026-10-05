@@ -1,6 +1,6 @@
 # val — local only
 
-personal valorant shop checker. runs entirely on your machine, no public hosting.
+personal valorant shop checker. runs entirely on your machine.
 
 ## run it
 
@@ -9,13 +9,17 @@ personal valorant shop checker. runs entirely on your machine, no public hosting
 
 then open **http://localhost:10000/val** in your browser.
 
+## how it works
+
+- your ssid cookie is stored in your **browser's localstorage only**
+- the backend never stores anything — no database, no files
+- each request sends your ssid, backend uses it to talk to riot and forgets it
+- anyone can use the hosted version with their own ssid — accounts never clash
+
 ## what it needs
 
 - node.js installed ([nodejs.org](https://nodejs.org))
-- that's it. no mongodb, no render, no vercel.
-
-your ssid is encrypted and stored in `.val-local.json` next to the code.
-nothing leaves your machine except the riot api calls.
+- that's it.
 
 ## first run
 
