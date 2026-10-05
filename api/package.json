@@ -1,0 +1,1 @@
+{"dependencies":{"cors":"^2.8.5","express":"^4.19.2","mongodb":"^6.5.0"},"main":"server.js","name":"val-api","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
