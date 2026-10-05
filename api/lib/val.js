@@ -69,14 +69,17 @@ async function getShop(t) {
   const layout = d.SkinsPanelLayout || {};
   const offerIds = layout.SingleItemOffers || [];
   const expiresIn = layout.SingleItemOffersRemainingDurationInSeconds || 0;
-  const prices = {};
+  const prices = {}, skinOf = {};
   for (const o of layout.SingleItemStoreOffers || []) {
     prices[o.OfferID] = (o.Cost || {})[VP_CURRENCY] ?? null;
+    const reward = (o.Rewards || [])[0];
+    if (reward) skinOf[o.OfferID] = reward.ItemID;
   }
   const skins = await getSkins();
   const offers = offerIds.map((id) => {
-    const s = skins[id] || {};
-    return { uuid: id, name: s.name || id.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", price: prices[id] };
+    const skinId = skinOf[id] || id;
+    const s = skins[skinId] || {};
+    return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", price: prices[id] };
   });
   return { offers, expiresIn, fetchedAt: Date.now() };
 }
