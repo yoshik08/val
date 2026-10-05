@@ -1,45 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>val — shop + live match</title>
+<meta name="description" content="valorant daily shop and live match tracker">
+<link rel="preload" href="assets/fonts/HankenGrotesk-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<script>(function(){try{var t=localStorage.getItem("val-theme");if(t)document.documentElement.dataset.theme=t;else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";}catch(e){}})();</script>
 </head>
 <body>
-<header>
-  <div class="logo">VAL<span>.</span></div>
-  <div id="acct" class="acct">not connected</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/">val<span class="brand-dot">.</span></a>
+    <div class="topbar-right">
+      <span id="acct" class="acct">not connected</span>
+      <button id="theme-btn" class="icon-btn" title="toggle theme" aria-label="toggle theme">◐</button>
+    </div>
+  </div>
 </header>
 
-<main>
+<main class="wrap">
+  <div class="hero">
+    <h1>daily shop <span class="accent">+</span> live match</h1>
+    <p>your valorant store rotation and current game, in one place.</p>
+  </div>
+
   <!-- login -->
   <section id="login-sec" class="card hidden">
-    <h2>connect riot account</h2>
-    <p class="dim">your login stays on the server, encrypted. tokens refresh automatically.</p>
-    <input id="ri" type="text" placeholder="riot username" autocomplete="username">
-    <input id="rp" type="password" placeholder="password" autocomplete="current-password">
-    <button id="connect-btn">connect</button>
-    <div id="mfa-row" class="hidden">
-      <input id="mfa-code" type="text" placeholder="2fa code" inputmode="numeric">
-      <button id="mfa-btn">verify</button>
+    <div class="card-title"><span>connect riot account</span></div>
+    <p class="dim" style="margin-bottom:14px">your login stays on the server, encrypted. tokens refresh automatically.</p>
+    <div class="field">
+      <label for="ri">riot username</label>
+      <input id="ri" type="text" placeholder="your riot account username" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="rp">password</label>
+      <input id="rp" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button id="connect-btn" class="btn">connect</button>
+    <div id="mfa-row" class="hidden" style="margin-top:14px">
+      <div class="field">
+        <label for="mfa-code">2fa code</label>
+        <div class="row">
+          <input id="mfa-code" type="text" placeholder="123456" inputmode="numeric">
+          <button id="mfa-btn" class="btn">verify</button>
+        </div>
+      </div>
     </div>
     <p id="login-err" class="err"></p>
   </section>
 
   <!-- shop -->
-  <section id="shop-sec" class="hidden">
-    <div class="sec-head">
-      <h2>daily shop</h2>
-      <span id="shop-timer" class="dim mono"></span>
-    </div>
+  <section id="shop-sec" class="card hidden">
+    <div class="card-title"><span>daily shop</span><span class="right mono" id="shop-timer"></span></div>
     <div id="shop-grid" class="grid"></div>
   </section>
 
   <!-- match -->
-  <section id="match-sec" class="hidden">
-    <div class="sec-head"><h2>live match</h2><span id="match-refresh" class="dim mono"></span></div>
+  <section id="match-sec" class="card hidden">
+    <div class="card-title"><span>live match</span><span class="right mono" id="match-refresh"></span></div>
     <div id="match-body"></div>
+    <div class="disconnect-wrap"><button id="disconnect-btn" class="btn ghost hidden">disconnect</button></div>
   </section>
 
   <p id="empty" class="dim">connect your riot account to see your shop and live match.</p>

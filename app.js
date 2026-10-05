@@ -4,6 +4,14 @@
 const API = () => window.VAL_API || "";
 const $ = (id) => document.getElementById(id);
 
+/* theme (match yoshik.xyz) */
+$("theme-btn").onclick = () => {
+  const el = document.documentElement;
+  const next = el.dataset.theme === "dark" ? "light" : "dark";
+  el.dataset.theme = next;
+  try { localStorage.setItem("val-theme", next); } catch (e) {}
+};
+
 async function call(path, opts) {
   opts = opts || {};
   const headers = { ...(opts.headers || {}) };
@@ -30,14 +38,8 @@ async function refreshStatus() {
       $("empty").classList.add("hidden");
       $("shop-sec").classList.remove("hidden");
       $("match-sec").classList.remove("hidden");
+      $("disconnect-btn").classList.remove("hidden");
       loadShop(); loadMatch();
-      const disc = $("disconnect-btn");
-      if (!disc) {
-        const b = document.createElement("button");
-        b.id = "disconnect-btn"; b.className = "ghost disconnect"; b.textContent = "disconnect";
-        b.onclick = async () => { await call("/api/disconnect", { method: "POST" }); location.reload(); };
-        $("match-sec").appendChild(b);
-      }
     } else {
       $("login-sec").classList.remove("hidden");
     }
@@ -62,6 +64,11 @@ $("mfa-btn").onclick = async () => {
   } catch (e) { $("login-err").textContent = e.message; }
 };
 
+$("disconnect-btn").onclick = async () => {
+  await call("/api/disconnect", { method: "POST" });
+  location.reload();
+};
+
 function fmtTime(s) {
   s = Math.max(0, s | 0);
   const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, sec = s % 60;
@@ -82,27 +89,33 @@ async function loadShop() {
   } catch (e) { $("shop-grid").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
 
+function teamList(players) {
+  if (!players || !players.length) return "";
+  return `<div class="team-list">` + players.map((p) =>
+    `<div class="p"><span>${esc(p.name)}</span>${p.agent ? `<span class="a">${esc(p.agent)}</span>` : ""}</div>`
+  ).join("") + `</div>`;
+}
+
 async function loadMatch() {
   try {
     const m = await call("/api/match");
     const el = $("match-body");
     if (!m.inGame) {
-      el.innerHTML = `<p class="dim">not in a match right now.</p>`;
+      el.innerHTML = `<p class="dim">not in a match right now. queue up and this updates live.</p>`;
     } else if (m.phase === "pregame") {
-      const mates = (m.teammates || []).map((p) =>
-        `<div>${esc(p.name)}${p.agent ? ` <span class="dim">· ${esc(p.agent)}</span>` : ""}</div>`).join("");
-      el.innerHTML = `<div class="live"><h3>agent select</h3>` +
-        `<p class="meta">${esc(m.map)}${m.mode ? " · " + esc(m.mode) : ""}${m.myAgent ? " · you: " + esc(m.myAgent) : ""}</p>` +
-        (mates ? `<div class="meta" style="margin-top:8px">team:<br>${mates}</div>` : "") + `</div>`;
+      el.innerHTML = `<div class="match-live">` +
+        `<span class="pill pregame">agent select</span>` +
+        `<h3 style="margin-top:8px">${esc(m.map)}${m.mode ? ` <span class="dim">· ${esc(m.mode)}</span>` : ""}</h3>` +
+        (m.myAgent ? `<p class="match-meta">you locked <b>${esc(m.myAgent)}</b></p>` : `<p class="match-meta">picking agents…</p>`) +
+        teamList(m.teammates) + `</div>`;
     } else {
-      const mates = (m.teammates || []).map((p) =>
-        `<div>${esc(p.name)}${p.agent ? ` <span class="dim">· ${esc(p.agent)}</span>` : ""}</div>`).join("");
-      el.innerHTML = `<div class="live"><h3>${esc(m.map)}${m.mode ? " · " + esc(m.mode) : ""}</h3>` +
-        (m.myAgent ? `<p class="meta">you: ${esc(m.myAgent)}</p>` : "") +
-        (mates ? `<div class="meta" style="margin-top:8px">team:<br>${mates}</div>` : "") + `</div>`;
+      el.innerHTML = `<div class="match-live">` +
+        `<span class="pill live">in match</span>` +
+        `<h3 style="margin-top:8px">${esc(m.map)}${m.mode ? ` <span class="dim">· ${esc(m.mode)}</span>` : ""}</h3>` +
+        (m.myAgent ? `<p class="match-meta">playing <b>${esc(m.myAgent)}</b></p>` : "") +
+        teamList(m.teammates) + `</div>`;
     }
-    const now = new Date();
-    $("match-refresh").textContent = "updated " + now.toLocaleTimeString();
+    $("match-refresh").textContent = "updated " + new Date().toLocaleTimeString();
   } catch (e) { $("match-body").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
 
