@@ -66,11 +66,6 @@ async function getShop(t) {
   if (r.status === 401) { const e = new Error("token expired"); e.code = "TOKEN_EXPIRED"; throw e; }
   if (!r.ok) throw new Error("storefront failed: " + r.status);
   const d = await r.json();
-  // TEMP DEBUG
-  console.log("DEBUG storefront keys:", Object.keys(d));
-  console.log("DEBUG layout keys:", Object.keys(d.SkinsPanelLayout || {}));
-  const dbgOffer = (d.SkinsPanelLayout && d.SkinsPanelLayout.SingleItemStoreOffers || [])[0];
-  console.log("DEBUG first offer:", JSON.stringify(dbgOffer).slice(0, 500));
   const layout = d.SkinsPanelLayout || {};
   const offerIds = layout.SingleItemOffers || [];
   const expiresIn = layout.SingleItemOffersRemainingDurationInSeconds || 0;
@@ -80,13 +75,19 @@ async function getShop(t) {
     const reward = (o.Rewards || [])[0];
     if (reward) skinOf[o.OfferID] = reward.ItemID;
   }
+  // TEMP DEBUG: expose raw structure
+  const dbgOffers = (layout.SingleItemStoreOffers || []).map(o => ({
+    offerID: o.OfferID,
+    rewards: (o.Rewards || []).map(rw => ({ itemID: rw.ItemID, typeID: rw.ItemTypeID })),
+  }));
   const skins = await getSkins();
+  const sampleSkinKeys = Object.keys(skins).slice(0, 3);
   const offers = offerIds.map((id) => {
     const skinId = skinOf[id] || id;
     const s = skins[skinId] || {};
     return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", price: prices[id] };
   });
-  return { offers, expiresIn, fetchedAt: Date.now() };
+  return { offers, expiresIn, fetchedAt: Date.now(), _debug: { dbgOffers, sampleSkinKeys, singleItemOffers: offerIds } };
 }
 
 /* current match: pregame (agent select) then core-game (live) */
