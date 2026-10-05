@@ -66,6 +66,11 @@ async function getShop(t) {
   if (r.status === 401) { const e = new Error("token expired"); e.code = "TOKEN_EXPIRED"; throw e; }
   if (!r.ok) throw new Error("storefront failed: " + r.status);
   const d = await r.json();
+  // TEMP DEBUG
+  console.log("DEBUG storefront keys:", Object.keys(d));
+  console.log("DEBUG layout keys:", Object.keys(d.SkinsPanelLayout || {}));
+  const dbgOffer = (d.SkinsPanelLayout && d.SkinsPanelLayout.SingleItemStoreOffers || [])[0];
+  console.log("DEBUG first offer:", JSON.stringify(dbgOffer).slice(0, 500));
   const layout = d.SkinsPanelLayout || {};
   const offerIds = layout.SingleItemOffers || [];
   const expiresIn = layout.SingleItemOffersRemainingDurationInSeconds || 0;
