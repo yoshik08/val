@@ -32,10 +32,14 @@ async function getSkins() {
     const icon = s.displayIcon
       || (s.chromas && s.chromas[0] && (s.chromas[0].fullRender || s.chromas[0].displayIcon))
       || (s.levels && s.levels[0] && s.levels[0].displayIcon) || "";
-    const info = { name: s.displayName, icon, weapon: weaponOf[s.uuid] || "" };
+    const fullRender = (s.chromas && s.chromas[0] && s.chromas[0].fullRender) || "";
+    const info = { name: s.displayName, icon, weapon: weaponOf[s.uuid] || "", fullRender };
     map[s.uuid] = info;
-    // storefront returns level/chroma uuids — map them back to the parent skin
-    for (const l of s.levels || []) if (l.uuid) map[l.uuid] = info;
+    // storefront returns level/chroma uuids — map them back to the parent skin,
+    // keeping the level-specific icon as a fallback
+    for (const l of s.levels || []) if (l.uuid) {
+      map[l.uuid] = { ...info, levelIcon: l.displayIcon || "" };
+    }
     for (const c of s.chromas || []) if (c.uuid) map[c.uuid] = info;
   }
   skinCache = map; skinCacheAt = Date.now();
@@ -83,7 +87,9 @@ async function getShop(t) {
   const offers = offerIds.map((id) => {
     const skinId = skinOf[id] || id;
     const s = skins[skinId] || {};
-    return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", price: prices[id] };
+    // fallback chain: parent icon -> level icon -> full render
+    const fallbacks = [s.levelIcon, s.fullRender].filter(u => u && u !== s.icon);
+    return { uuid: skinId, name: s.name || skinId.slice(0, 8), weapon: s.weapon || "", icon: s.icon || "", fallbacks, price: prices[id] };
   });
   return { offers, expiresIn, fetchedAt: Date.now() };
 }

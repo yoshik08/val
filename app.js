@@ -70,9 +70,9 @@ async function loadShop() {
   try {
     const d = await call("/api/shop");
     $("shop-timer").textContent = "resets in " + fmtTime(d.expiresIn);
-    $("shop-grid").innerHTML = d.offers.map((o) =>
+    $("shop-grid").innerHTML = d.offers.map((o, i) =>
       `<div class="offer">` +
-      (o.icon ? `<img src="${o.icon}" alt="" loading="lazy">` : "") +
+      (o.icon ? `<img src="${o.icon}" alt="" loading="lazy" data-fb='${JSON.stringify(o.fallbacks || [])}' onerror="imgFallback(this)">` : "") +
       `<div class="info"><div class="name">${esc(o.name)}</div>` +
       `<div class="weapon">${esc(o.weapon)}</div>` +
       `<div class="price">${o.price != null ? o.price.toLocaleString() + " VP" : "—"}</div></div></div>`
@@ -114,6 +114,18 @@ function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+/* image fallback chain: try each fallback url, then hide gracefully */
+window.imgFallback = function (img) {
+  let fb = [];
+  try { fb = JSON.parse(img.dataset.fb || "[]"); } catch (e) {}
+  if (fb.length) {
+    img.dataset.fb = JSON.stringify(fb.slice(1));
+    img.src = fb[0];
+  } else {
+    img.style.display = "none";
+  }
+};
 
 refreshStatus();
 setInterval(() => { if (!$("match-sec").classList.contains("hidden")) loadMatch(); }, 30000);
