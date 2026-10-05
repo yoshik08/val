@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>val — shop + live match</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo">VAL<span>.</span></div>
+  <div id="acct" class="acct">not connected</div>
+</header>
+
+<main>
+  <!-- login -->
+  <section id="login-sec" class="card hidden">
+    <h2>connect riot account</h2>
+    <p class="dim">your login stays on the server, encrypted. tokens refresh automatically.</p>
+    <input id="ri" type="text" placeholder="riot username" autocomplete="username">
+    <input id="rp" type="password" placeholder="password" autocomplete="current-password">
+    <button id="connect-btn">connect</button>
+    <div id="mfa-row" class="hidden">
+      <input id="mfa-code" type="text" placeholder="2fa code" inputmode="numeric">
+      <button id="mfa-btn">verify</button>
+    </div>
+    <p id="login-err" class="err"></p>
+  </section>
+
+  <!-- shop -->
+  <section id="shop-sec" class="hidden">
+    <div class="sec-head">
+      <h2>daily shop</h2>
+      <span id="shop-timer" class="dim mono"></span>
+    </div>
+    <div id="shop-grid" class="grid"></div>
+  </section>
+
+  <!-- match -->
+  <section id="match-sec" class="hidden">
+    <div class="sec-head"><h2>live match</h2><span id="match-refresh" class="dim mono"></span></div>
+    <div id="match-body"></div>
+  </section>
+
+  <p id="empty" class="dim">connect your riot account to see your shop and live match.</p>
+</main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
