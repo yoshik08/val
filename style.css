@@ -1,12 +1,12 @@
 @font-face {
   font-family: "Hanken Grotesk"; font-style: normal; font-weight: 400 700;
   font-display: swap;
-  src: url("assets/fonts/HankenGrotesk-400.woff2") format("woff2");
+  src: url("/val/assets/fonts/HankenGrotesk-400.woff2") format("woff2");
 }
 @font-face {
   font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 500;
   font-display: swap;
-  src: url("assets/fonts/JetBrainsMono-400.woff2") format("woff2");
+  src: url("/val/assets/fonts/JetBrainsMono-400.woff2") format("woff2");
 }
 
 /* ---------- themes (match yoshik.xyz) ---------- */
