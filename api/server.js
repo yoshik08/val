@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const { getDb } = require("./lib/db");
 const { enc, dec } = require("./lib/crypto");
 const riot = require("./lib/riot");
@@ -8,6 +9,13 @@ const val = require("./lib/val");
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : true }));
 app.use(express.json({ limit: "100kb" }));
+
+// local-only mode: serve the frontend from the backend (single process)
+const LOCAL_MODE = !process.env.MONGODB_URI;
+if (LOCAL_MODE) {
+  app.use("/val", express.static(path.join(__dirname, "..")));
+  app.get("/val", (req, res) => res.sendFile(path.join(__dirname, "..", "index.html")));
+}
 
 const str = (v, n) => (typeof v === "string" ? v.slice(0, n || 500) : "");
 const coll = async () => (await getDb()).collection("auth");
