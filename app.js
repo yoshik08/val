@@ -26,7 +26,6 @@ async function call(path, opts) {
   return d;
 }
 
-let mfaId = null;
 
 async function refreshStatus() {
   try {
@@ -48,18 +47,10 @@ async function refreshStatus() {
 
 $("connect-btn").onclick = async () => {
   $("login-err").textContent = "";
+  const ssid = $("ssid").value.trim();
+  if (!ssid) { $("login-err").textContent = "paste your ssid cookie first"; return; }
   try {
-    const d = await call("/api/connect", { method: "POST",
-      body: { username: $("ri").value.trim(), password: $("rp").value } });
-    if (d.mfa) { mfaId = d.mfaId; $("mfa-row").classList.remove("hidden"); $("login-err").textContent = "2fa code sent — enter it below"; }
-    else location.reload();
-  } catch (e) { $("login-err").textContent = e.message; }
-};
-
-$("mfa-btn").onclick = async () => {
-  $("login-err").textContent = "";
-  try {
-    await call("/api/connect/mfa", { method: "POST", body: { mfaId, code: $("mfa-code").value.trim() } });
+    await call("/api/connect", { method: "POST", body: { ssid } });
     location.reload();
   } catch (e) { $("login-err").textContent = e.message; }
 };

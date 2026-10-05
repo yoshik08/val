@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const crypto = require("crypto");
 const { getDb } = require("./lib/db");
 const { enc, dec } = require("./lib/crypto");
 const riot = require("./lib/riot");
@@ -12,7 +11,6 @@ app.use(express.json({ limit: "100kb" }));
 
 const str = (v, n) => (typeof v === "string" ? v.slice(0, n || 500) : "");
 const coll = async () => (await getDb()).collection("auth");
-const MFA_TTL = 5 * 60 * 1000;
 
 /* ---------- token management ---------- */
 async function getTokens() {
@@ -21,13 +19,12 @@ async function getTokens() {
   const t = doc.tokens;
   if (!t || !t.accessToken) return null;
   if (t.expiresAt && t.expiresAt < Date.now()) {
-    // re-auth silently with stored creds
+    // re-auth silently with stored ssid cookie
     try {
-      const creds = JSON.parse(dec(doc.creds));
-      const r = await riot.login(creds.u, creds.p);
-      if (r.mfa) return { mfaExpired: true };
-      await (await coll()).updateOne({ _id: "riot" }, { $set: { tokens: r.tokens, updatedAt: new Date() } });
-      return r.tokens;
+      const ssid = dec(doc.ssid);
+      const tokens = await riot.cookieReauth(ssid);
+      await (await coll()).updateOne({ _id: "riot" }, { $set: { tokens, updatedAt: new Date() } });
+      return tokens;
     } catch (e) {
       console.log("re-auth failed:", e.message);
       return null;
@@ -39,7 +36,7 @@ async function getTokens() {
 async function withTokens(fn) {
   let t = await getTokens();
   if (!t) { const e = new Error("not connected"); e.code = 401; throw e; }
-  if (t.mfaExpired) { const e = new Error("session expired, reconnect"); e.code = 401; throw e; }
+  
   try {
     return await fn(t);
   } catch (e) {
@@ -47,7 +44,7 @@ async function withTokens(fn) {
       // force refresh and retry once
       await (await coll()).updateOne({ _id: "riot" }, { $set: { "tokens.expiresAt": 0 } });
       t = await getTokens();
-      if (!t || t.mfaExpired) { const er = new Error("session expired"); er.code = 401; throw er; }
+      if (!t) { const er = new Error("session expired"); er.code = 401; throw er; }
       return await fn(t);
     }
     throw e;
@@ -59,50 +56,17 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 app.post("/api/connect", async (req, res) => {
   try {
-    const username = str(req.body.username, 200);
-    const password = str(req.body.password, 500);
-    if (!username || !password) return res.status(400).json({ error: "username and password required" });
-    const r = await riot.login(username, password);
-    if (r.mfa) {
-      const mfaId = crypto.randomBytes(16).toString("hex");
-      await (await coll()).updateOne(
-        { _id: "mfa:" + mfaId },
-        { $set: { cookies: r.cookies, creds: enc(JSON.stringify({ u: username, p: password })), createdAt: new Date() } },
-        { upsert: true }
-      );
-      // cleanup old mfa sessions
-      await (await coll()).deleteMany({ _id: /^mfa:/, createdAt: { $lt: new Date(Date.now() - MFA_TTL) } });
-      return res.json({ mfa: true, mfaId });
-    }
+    const ssid = str(req.body.ssid, 2000).trim();
+    if (!ssid) return res.status(400).json({ error: "ssid cookie required" });
+    const tokens = await riot.cookieReauth(ssid);
     await (await coll()).updateOne(
       { _id: "riot" },
-      { $set: { creds: enc(JSON.stringify({ u: username, p: password })), tokens: r.tokens, updatedAt: new Date() } },
+      { $set: { ssid: enc(ssid), tokens, updatedAt: new Date() } },
       { upsert: true }
     );
-    res.json({ ok: true, gameName: r.tokens.gameName, tagLine: r.tokens.tagLine });
+    res.json({ ok: true, gameName: tokens.gameName, tagLine: tokens.tagLine });
   } catch (e) {
     console.log("connect failed:", e.message);
-    res.status(401).json({ error: e.message.includes("auth_failure") ? "invalid username or password" : e.message.slice(0, 160) });
-  }
-});
-
-app.post("/api/connect/mfa", async (req, res) => {
-  try {
-    const mfaId = str(req.body.mfaId, 64);
-    const code = str(req.body.code, 20);
-    if (!mfaId || !code) return res.status(400).json({ error: "mfaId and code required" });
-    const doc = await (await coll()).findOne({ _id: "mfa:" + mfaId });
-    if (!doc) return res.status(400).json({ error: "mfa session expired, try again" });
-    const r = await riot.submitMfa(doc.cookies, code);
-    await (await coll()).updateOne(
-      { _id: "riot" },
-      { $set: { creds: doc.creds, tokens: r.tokens, updatedAt: new Date() } },
-      { upsert: true }
-    );
-    await (await coll()).deleteOne({ _id: "mfa:" + mfaId });
-    res.json({ ok: true, gameName: r.tokens.gameName, tagLine: r.tokens.tagLine });
-  } catch (e) {
-    console.log("mfa failed:", e.message);
     res.status(401).json({ error: e.message.slice(0, 160) });
   }
 });

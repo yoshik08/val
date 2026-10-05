@@ -34,26 +34,22 @@
   <!-- login -->
   <section id="login-sec" class="card hidden">
     <div class="card-title"><span>connect riot account</span></div>
-    <p class="dim" style="margin-bottom:14px">your login stays on the server, encrypted. tokens refresh automatically.</p>
+    <p class="dim" style="margin-bottom:14px">riot now blocks password logins from websites, so we use your riot session cookie instead. your password never touches this site.</p>
     <div class="field">
-      <label for="ri">riot username</label>
-      <input id="ri" type="text" placeholder="your riot account username" autocomplete="username">
-    </div>
-    <div class="field">
-      <label for="rp">password</label>
-      <input id="rp" type="password" placeholder="••••••••" autocomplete="current-password">
+      <label for="ssid">ssid cookie</label>
+      <input id="ssid" type="text" placeholder="paste your ssid cookie value" autocomplete="off" spellcheck="false">
     </div>
     <button id="connect-btn" class="btn">connect</button>
-    <div id="mfa-row" class="hidden" style="margin-top:14px">
-      <div class="field">
-        <label for="mfa-code">2fa code</label>
-        <div class="row">
-          <input id="mfa-code" type="text" placeholder="123456" inputmode="numeric">
-          <button id="mfa-btn" class="btn">verify</button>
-        </div>
-      </div>
-    </div>
     <p id="login-err" class="err"></p>
+    <details style="margin-top:14px">
+      <summary class="dim" style="cursor:pointer;font-size:13px">how to get your ssid (30 sec, laptop needed)</summary>
+      <ol class="dim" style="margin:10px 0 0 18px;font-size:13px;line-height:1.7">
+        <li>on your laptop, open chrome and log into <b>playvalorant.com</b></li>
+        <li>press <b>f12</b> → <b>application</b> tab → <b>cookies</b> → <b>https://auth.riotgames.com</b></li>
+        <li>find <b>ssid</b>, double-click its value and copy it</li>
+        <li>paste it above and hit connect</li>
+      </ol>
+    </details>
   </section>
 
   <!-- shop -->
