@@ -9,6 +9,22 @@
   src: url("/val/assets/fonts/JetBrainsMono-400.woff2") format("woff2");
 }
 
+/* ---------- custom cursor (match yoshik.xyz) ---------- */
+.cursor-dot, .cursor-ring {
+  position: fixed; top: 0; left: 0; z-index: 300;
+  pointer-events: none; border-radius: 50%; display: none;
+}
+@media (pointer: fine) {
+  .cursor-dot, .cursor-ring { display: block; }
+  body, a, button, input { cursor: none; }
+}
+.cursor-dot { width: 5px; height: 5px; background: var(--accent); }
+.cursor-ring {
+  width: 30px; height: 30px; border: 1px solid var(--accent); opacity: .5;
+  transition: width .25s ease, height .25s ease, opacity .25s ease;
+}
+body.link-hover .cursor-ring { width: 48px; height: 48px; opacity: .85; }
+
 /* ---------- themes (match yoshik.xyz) ---------- */
 :root, html[data-theme="light"] {
   --bg: #fafafa;

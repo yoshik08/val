@@ -126,4 +126,30 @@ function esc(s) {
 
 refreshStatus();
 setInterval(() => { if (!$("match-sec").classList.contains("hidden")) loadMatch(); }, 30000);
+
+/* ---------- custom cursor (spring physics, match yoshik.xyz) ---------- */
+(function cursor() {
+  if (!window.matchMedia("(pointer: fine)").matches) return;
+  const dot = document.querySelector(".cursor-dot");
+  const ring = document.querySelector(".cursor-ring");
+  let mx = -100, my = -100, rx = -100, ry = -100, rvx = 0, rvy = 0, pulse = 0;
+  document.addEventListener("mousemove", (e) => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.transform = `translate(${mx - 2.5}px,${my - 2.5}px)`;
+  });
+  document.addEventListener("mousedown", () => { pulse = 1; });
+  document.querySelectorAll("a, button, input").forEach((el) => {
+    el.addEventListener("mouseenter", () => document.body.classList.add("link-hover"));
+    el.addEventListener("mouseleave", () => document.body.classList.remove("link-hover"));
+  });
+  (function loop() {
+    rvx += (mx - rx) * 0.35; rvy += (my - ry) * 0.35;
+    rvx *= 0.62; rvy *= 0.62;
+    rx += rvx; ry += rvy;
+    pulse *= 0.9;
+    const s = document.body.classList.contains("link-hover") ? 24 : 15;
+    ring.style.transform = `translate(${rx - s}px,${ry - s}px) scale(${(1 + pulse * 0.7).toFixed(3)})`;
+    requestAnimationFrame(loop);
+  })();
+})();
 })();
