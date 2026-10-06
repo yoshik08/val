@@ -51,9 +51,16 @@ export const authConfig = {
   providers,
   trustHost: true,
   callbacks: {
+    async jwt({ token, account }) {
+      // capture google's stable account id explicitly — don't rely on token.sub defaults
+      if (account?.provider === "google" && account.providerAccountId) {
+        token.googleId = account.providerAccountId;
+      }
+      return token;
+    },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = (token.googleId as string) || token.sub || "";
       }
       return session;
     },
