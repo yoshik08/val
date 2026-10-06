@@ -5,7 +5,7 @@ import Button from "./ui/Button";
 
 async function signOutAction() {
   "use server";
-  await signOut({ redirectTo: "/" });
+  await signOut({ redirectTo: "/val" });
 }
 
 export default async function Header() {
