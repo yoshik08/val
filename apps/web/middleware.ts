@@ -1,17 +1,22 @@
 import { auth } from "@/lib/auth";
 
+const BASE = "/val";
+
 export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const protectedPaths = ["/dashboard", "/connect"];
-  const needsAuth = protectedPaths.some((p) => pathname.startsWith(p));
+  const pathname = req.nextUrl.pathname;
+  // req.nextUrl.pathname includes basePath when one is configured; accept
+  // both forms so the gate works regardless.
+  const p = pathname.startsWith(BASE) ? pathname.slice(BASE.length) || "/" : pathname;
+  const needsAuth = p === "/dashboard" || p.startsWith("/dashboard/") || p === "/connect" || p.startsWith("/connect/");
 
   if (needsAuth && !req.auth) {
-    const url = new URL("/login", req.url);
-    url.searchParams.set("next", pathname);
+    const url = req.nextUrl.clone();
+    url.pathname = `${BASE}/login`;
+    url.searchParams.set("next", pathname.startsWith(BASE) ? pathname : `${BASE}${pathname}`);
     return Response.redirect(url);
   }
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/connect/:path*"],
+  matcher: ["/val/dashboard/:path*", "/val/connect/:path*", "/dashboard/:path*", "/connect/:path*"],
 };

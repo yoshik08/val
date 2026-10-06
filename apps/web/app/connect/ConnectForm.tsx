@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import SsidGuide from "@/components/SsidGuide";
 import Skeleton from "@/components/ui/Skeleton";
 import type { StatusData } from "@/lib/types";
+import { bp } from "@/lib/basePath";
 
 export default function ConnectForm() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function ConnectForm() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/status", { cache: "no-store" });
+        const res = await fetch(bp("/api/status"), { cache: "no-store" });
         const data: StatusData & { error?: string; code?: string } = await res.json().catch(() => ({} as StatusData));
         if (cancelled) return;
         if (res.ok && data.connected) {
@@ -50,7 +51,7 @@ export default function ConnectForm() {
     setBusy(true);
     try {
       // accepts either the raw ssid value or the full cookie string
-      const res = await fetch("/api/riot/connect", {
+      const res = await fetch(bp("/api/riot/connect"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ssid: value }),

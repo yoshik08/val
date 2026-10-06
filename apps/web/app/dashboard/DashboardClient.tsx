@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApi, isExpired } from "@/lib/use-api";
+import { bp } from "@/lib/basePath";
 import WalletBar from "@/components/store/WalletBar";
 import DailyStore from "@/components/store/DailyStore";
 import NightMarket from "@/components/store/NightMarket";
@@ -35,7 +36,7 @@ export default function DashboardClient() {
   const disconnect = async () => {
     setBusy("disconnect");
     try {
-      await fetch("/api/riot/disconnect", { method: "DELETE" });
+      await fetch(bp("/api/riot/disconnect"), { method: "DELETE" });
     } catch {
       /* best effort */
     }
@@ -47,7 +48,7 @@ export default function DashboardClient() {
     if (!accountId) return;
     setBusy(accountId);
     try {
-      await fetch("/api/riot/switch", {
+      await fetch(bp("/api/riot/switch"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId }),

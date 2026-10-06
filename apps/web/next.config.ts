@@ -1,13 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Absolute asset URLs so the app also works when proxied through
-  // yoshik.xyz/val (vercel.json rewrite) — relative /_next/* paths would
-  // otherwise resolve against yoshik.xyz and 404.
-  assetPrefix:
-    process.env.NODE_ENV === "production"
-      ? "https://val.yoshik.xyz"
-      : undefined,
+  // Served under https://yoshik.xyz/val via a rewrite in the personal
+  // site's vercel.json. basePath makes all routes, links, and assets live
+  // under /val so the proxy works (auth cookies included).
+  basePath: "/val",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },

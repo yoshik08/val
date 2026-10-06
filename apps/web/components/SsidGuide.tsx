@@ -2,11 +2,11 @@ export default function SsidGuide() {
   return (
     <details className="guide" style={{ marginTop: 14 }}>
       <summary style={{ fontSize: 13, color: "var(--dim)" }}>
-        how to get your ssid (30 sec, laptop needed)
+        how to get your ssid (30 sec, pc needed)
       </summary>
       <ol className="guide-list">
         <li>
-          on your laptop, open chrome and log into <b>playvalorant.com</b>
+          on your pc, open chrome and log into <b>playvalorant.com</b>
         </li>
         <li>
           press <b>f12</b> → <b>application</b> tab → <b>cookies</b> →{" "}

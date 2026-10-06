@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bp } from "./basePath";
 
 export type FetchState<T> =
   | { status: "loading"; data?: undefined; error?: undefined }
@@ -16,7 +17,7 @@ export function useApi<T>(path: string, deps: unknown[] = [], intervalMs?: numbe
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(path, { cache: "no-store" });
+      const res = await fetch(bp(path), { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         setState({

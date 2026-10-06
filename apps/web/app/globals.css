@@ -3,17 +3,17 @@
 @font-face {
   font-family: "Hanken Grotesk"; font-style: normal; font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/HankenGrotesk-400.woff2") format("woff2");
+  src: url("/val/fonts/HankenGrotesk-400.woff2") format("woff2");
 }
 @font-face {
   font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 500;
   font-display: swap;
-  src: url("/fonts/JetBrainsMono-400.woff2") format("woff2");
+  src: url("/val/fonts/JetBrainsMono-400.woff2") format("woff2");
 }
 @font-face {
   font-family: "JetBrains Mono"; font-style: italic; font-weight: 400;
   font-display: swap;
-  src: url("/fonts/JetBrainsMono-400-italic.woff2") format("woff2");
+  src: url("/val/fonts/JetBrainsMono-400-italic.woff2") format("woff2");
 }
 
 /* ---------- custom cursor ---------- */
@@ -137,7 +137,8 @@ input, textarea {
   background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
   color: var(--ink); transition: border-color .2s;
 }
-textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
+textarea { min-height: 84px; resize: vertical; line-height: 1.5; scrollbar-width: none; -ms-overflow-style: none; }
+textarea::-webkit-scrollbar { display: none; }
 input:focus, textarea:focus { outline: none; border-color: var(--accent); }
 input::placeholder, textarea::placeholder { color: var(--faint); }
 .btn {

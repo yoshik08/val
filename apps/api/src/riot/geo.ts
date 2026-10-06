@@ -1,7 +1,7 @@
 import { RiotError } from "./errors";
 import { RIOT_UA } from "./auth";
 
-const GEO_URL = "https://riot-geo.pas.si.riotgames.com/pas/product/valorant";
+const GEO_URL = "https://riot-geo.pas.si.riotgames.com/pas/v1/product/valorant";
 
 /* shard map: latam|br|na -> na, eu -> eu, ap -> ap, kr -> kr */
 export function shardForRegion(region: string): string {
