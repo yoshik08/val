@@ -11,6 +11,7 @@ import Banner from "@/components/ui/Banner";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import type { Account } from "@/lib/types";
+import { ACCOUNT_CHANGED_EVENT } from "./AccountSwitcher";
 
 type MeData = {
   user?: { email?: string };
@@ -21,6 +22,18 @@ export default function DashboardClient() {
   const router = useRouter();
   const { status, data, error, reload } = useApi<MeData>("/api/me");
   const [busy, setBusy] = useState("");
+  const [dataKey, setDataKey] = useState(0);
+
+  // when the header switcher changes accounts, refetch everything
+  // (remount via key — no page reload)
+  useEffect(() => {
+    const onSwitch = () => {
+      reload();
+      setDataKey((k) => k + 1);
+    };
+    window.addEventListener(ACCOUNT_CHANGED_EVENT, onSwitch);
+    return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, onSwitch);
+  }, [reload]);
 
   const expired = status === "error" && isExpired(error);
   const accounts = status === "ok" ? data?.accounts ?? [] : [];
@@ -40,23 +53,6 @@ export default function DashboardClient() {
       /* best effort */
     }
     router.push("/connect");
-    router.refresh();
-  };
-
-  const switchAccount = async (accountId?: string) => {
-    if (!accountId) return;
-    setBusy(accountId);
-    try {
-      await fetch(bp("/api/riot/switch"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId }),
-      });
-    } catch {
-      /* best effort */
-    }
-    setBusy("");
-    reload();
     router.refresh();
   };
 
@@ -91,35 +87,14 @@ export default function DashboardClient() {
       )}
 
 
-      {status === "ok" && accounts.length > 0 && <DailyStore />}
-      {status === "ok" && accounts.length > 0 && <NightMarket />}
-      {status === "ok" && accounts.length > 0 && <MatchPanel />}
-
-      {(status === "ok" && accounts.length > 1) && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="card-title">
-            <span>accounts</span>
-          </div>
-          <div className="row" style={{ flexWrap: "wrap" }}>
-            {accounts.map((a) => {
-              const label =
-                a.gameName && a.tagLine
-                  ? `${a.gameName} #${a.tagLine}`
-                  : a.accountId ?? "account";
-              return (
-                <button
-                  key={a.accountId ?? label}
-                  className={`acct-chip${a.active ? " active" : ""}`}
-                  onClick={() => switchAccount(a.accountId)}
-                  disabled={busy !== "" || a.active}
-                >
-                  {busy === a.accountId ? "switching…" : label}
-                </button>
-              );
-            })}
-          </div>
+      {status === "ok" && accounts.length > 0 && (
+        <div key={dataKey}>
+          <DailyStore />
+          <NightMarket />
+          <MatchPanel />
         </div>
       )}
+
 
       {status === "ok" && accounts.length > 0 && (
         <div style={{ marginTop: 16 }}>

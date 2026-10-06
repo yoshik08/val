@@ -11,6 +11,9 @@ type MeData = {
   accounts?: (Account & { id?: string })[];
 };
 
+/** event fired after a successful account switch so data components refetch */
+export const ACCOUNT_CHANGED_EVENT = "val:account-changed";
+
 export default function AccountSwitcher() {
   const router = useRouter();
   const { status, data, reload } = useApi<MeData>("/api/me");
@@ -20,21 +23,24 @@ export default function AccountSwitcher() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const wrapRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const accounts = status === "ok" ? data?.accounts ?? [] : [];
   const active = accounts.find((a) => a.active) || accounts[0];
-  const label = active?.gameName
-    ? `${active.gameName} #${active.tagLine || ""}`
-    : "connect";
+
+  const openMenu = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 180);
+  };
 
   useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
     };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
   }, []);
 
   const switchAccount = async (accountId?: string) => {
@@ -44,13 +50,18 @@ export default function AccountSwitcher() {
     }
     setBusy(true);
     try {
-      await fetch(bp("/api/riot/switch"), {
+      const res = await fetch(bp("/api/riot/switch"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId }),
       });
+      if (!res.ok) return;
       setOpen(false);
-      reload();
+      await reload();
+      // tell dashboard data components to refetch (no page reload)
+      window.dispatchEvent(
+        new CustomEvent(ACCOUNT_CHANGED_EVENT, { detail: { accountId } })
+      );
       router.refresh();
     } finally {
       setBusy(false);
@@ -76,10 +87,14 @@ export default function AccountSwitcher() {
         setErr(d.error || `connect failed: ${res.status}`);
         return;
       }
+      const newId: string | undefined = d?.account?.id;
       setSsid("");
       setShowAdd(false);
       setOpen(false);
-      reload();
+      await reload();
+      window.dispatchEvent(
+        new CustomEvent(ACCOUNT_CHANGED_EVENT, { detail: { accountId: newId } })
+      );
       router.refresh();
     } finally {
       setBusy(false);
@@ -90,23 +105,37 @@ export default function AccountSwitcher() {
   if (accounts.length === 0) return null;
 
   return (
-    <div ref={wrapRef} style={{ position: "relative" }}>
+    <div
+      ref={wrapRef}
+      style={{ position: "relative" }}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
       <button
-        onClick={() => setOpen((o) => !o)}
         className="acct on"
-        style={{ cursor: "pointer", background: "none", border: "none", font: "inherit" }}
+        style={{
+          cursor: "pointer",
+          background: "none",
+          border: "none",
+          font: "inherit",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
         data-hover
       >
-        {label} <span style={{ fontSize: 10 }}>▾</span>
+        switch accounts <span style={{ fontSize: 10 }}>›</span>
       </button>
 
       {open && (
         <div
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleClose}
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
             right: 0,
-            minWidth: 220,
+            minWidth: 230,
             background: "var(--card)",
             border: "1px solid var(--border)",
             borderRadius: 12,
