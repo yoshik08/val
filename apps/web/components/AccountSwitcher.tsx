@@ -27,6 +27,9 @@ export default function AccountSwitcher() {
 
   const accounts = status === "ok" ? data?.accounts ?? [] : [];
   const active = accounts.find((a) => a.active) || accounts[0];
+  const riotId = active?.gameName
+    ? `${active.gameName}#${active.tagLine || ""}`
+    : "switch accounts";
 
   const openMenu = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -124,7 +127,7 @@ export default function AccountSwitcher() {
         }}
         data-hover
       >
-        switch accounts <span style={{ fontSize: 10 }}>›</span>
+        {riotId} <span style={{ fontSize: 10 }}>▾</span>
       </button>
 
       {open && (
@@ -145,7 +148,7 @@ export default function AccountSwitcher() {
           }}
         >
           {accounts.map((a) => {
-            const name = a.gameName ? `${a.gameName} #${a.tagLine || ""}` : "account";
+            const name = a.gameName ? `${a.gameName}#${a.tagLine || ""}` : "account";
             const isActive = a.id === active?.id;
             return (
               <button

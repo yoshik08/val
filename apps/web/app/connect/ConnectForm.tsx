@@ -26,7 +26,7 @@ export default function ConnectForm() {
         if (cancelled) return;
         if (res.ok && data.connected) {
           setStatus("connected");
-          setAccount(data.gameName && data.tagLine ? `${data.gameName} #${data.tagLine}` : "connected");
+          setAccount(data.gameName && data.tagLine ? `${data.gameName}#${data.tagLine}` : "connected");
         } else if (data.code === "SSID_EXPIRED" || res.status === 401) {
           setStatus("expired");
         } else {
