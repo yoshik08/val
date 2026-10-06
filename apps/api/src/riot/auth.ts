@@ -131,7 +131,9 @@ export async function cookieReauth(jar: CookieJar): Promise<{ tokens: RiotTokens
     puuid,
     gameName: acct.game_name || uj.gameName || "",
     tagLine: acct.tag_line || uj.tagLine || "",
-    expiresAt: Date.now() + expiresIn * 1000 - 60000,
+    // 5-min early refresh buffer: reauth well before riot kills the token,
+    // so requests never hit an expired token mid-flight.
+    expiresAt: Date.now() + expiresIn * 1000 - 5 * 60 * 1000,
   };
   return { tokens, jar: rotated };
 }
