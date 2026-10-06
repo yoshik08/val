@@ -1,4 +1,5 @@
 import { RiotError } from "./errors";
+import { riotFetch }from "./fetch";
 import type { CookieJar, RiotTokens } from "../types";
 import { fixtureTokens, FIXTURE_SSID } from "../fixture";
 import { config } from "../config";
@@ -70,7 +71,7 @@ export async function cookieReauth(jar: CookieJar): Promise<{ tokens: RiotTokens
     `&client_id=play-valorant-web-prod` +
     `&response_type=${encodeURIComponent("token id_token")}` +
     `&nonce=1&scope=${encodeURIComponent("account openid")}`;
-  const res = await fetch(`${AUTHORIZE}?${qs}`, {
+  const res = await riotFetch(`${AUTHORIZE}?${qs}`, {
     method: "GET",
     headers: { "User-Agent": RIOT_UA, Cookie: jarToHeader(jar) },
     redirect: "manual",
@@ -97,7 +98,7 @@ export async function cookieReauth(jar: CookieJar): Promise<{ tokens: RiotTokens
   const expiresIn = parseInt(fp.get("expires_in") || "3600", 10) || 3600;
   const rotated = mergeSetCookies(jar, res);
 
-  const ent = await fetch(ENTITLEMENTS, {
+  const ent = await riotFetch(ENTITLEMENTS, {
     method: "POST",
     headers: {
       "User-Agent": RIOT_UA,
@@ -110,7 +111,7 @@ export async function cookieReauth(jar: CookieJar): Promise<{ tokens: RiotTokens
   const entitlements = entJson && entJson.entitlements_token;
   if (!entitlements) throw new RiotError("entitlements request failed", "ENTITLEMENTS_FAILED");
 
-  const u = await fetch(USERINFO, {
+  const u = await riotFetch(USERINFO, {
     headers: { "User-Agent": RIOT_UA, Authorization: `Bearer ${accessToken}` },
   });
   const uj = (await u.json().catch(() => null)) as {

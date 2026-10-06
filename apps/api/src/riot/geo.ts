@@ -1,4 +1,5 @@
 import { RiotError } from "./errors";
+import { riotFetch }from "./fetch";
 import { RIOT_UA } from "./auth";
 
 const GEO_URL = "https://riot-geo.pas.si.riotgames.com/pas/v1/product/valorant";
@@ -16,7 +17,7 @@ export function shardForRegion(region: string): string {
 
 /* region/shard are discovered from riot, never hardcoded. */
 export async function getGeo(accessToken: string, idToken: string): Promise<{ region: string; shard: string }> {
-  const res = await fetch(GEO_URL, {
+  const res = await riotFetch(GEO_URL, {
     method: "PUT",
     headers: {
       "User-Agent": RIOT_UA,

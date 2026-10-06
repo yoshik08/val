@@ -1,4 +1,5 @@
 import { RiotError } from "./errors";
+import { riotFetch }from "./fetch";
 import { RIOT_UA } from "./auth";
 import type { DailyOffer, MatchData, NightOffer, RiotTokens, StoreData, Teammate, WalletData } from "../types";
 
@@ -12,7 +13,7 @@ let clientVersion: string | null = null;
 export async function getClientVersion(): Promise<string> {
   if (clientVersion) return clientVersion;
   try {
-    const j = (await (await fetch("https://valorant-api.com/v1/version")).json()) as {
+    const j = (await (await riotFetch("https://valorant-api.com/v1/version")).json()) as {
       data?: { riotClientVersion?: string };
     };
     clientVersion = (j.data && j.data.riotClientVersion) || "release-11.02-shipping-12-2953356";
@@ -52,8 +53,8 @@ let agentCacheAt = 0;
 export async function getSkinMap(): Promise<Record<string, SkinInfo>> {
   if (skinCache && Date.now() - skinCacheAt < DAY_MS) return skinCache;
   const [skinsJ, weaponsJ] = await Promise.all([
-    (await fetch("https://valorant-api.com/v1/weapons/skins")).json() as Promise<{ data?: any[] }>,
-    (await fetch("https://valorant-api.com/v1/weapons")).json() as Promise<{ data?: any[] }>,
+    (await riotFetch("https://valorant-api.com/v1/weapons/skins")).json() as Promise<{ data?: any[] }>,
+    (await riotFetch("https://valorant-api.com/v1/weapons")).json() as Promise<{ data?: any[] }>,
   ]);
   const weaponOf: Record<string, string> = {};
   for (const w of weaponsJ.data || []) for (const s of w.skins || []) weaponOf[s.uuid] = w.displayName;
@@ -83,7 +84,7 @@ export async function getAgentMap(): Promise<Record<string, string>> {
   if (agentCache && Date.now() - agentCacheAt < DAY_MS) return agentCache;
   try {
     const j = (await (
-      await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true")
+      await riotFetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true")
     ).json()) as { data?: { uuid?: string; displayName?: string }[] };
     const map: Record<string, string> = {};
     for (const a of j.data || []) if (a.uuid) map[a.uuid.toLowerCase()] = a.displayName || "";
@@ -116,7 +117,7 @@ function offerFrom(skinId: string, skins: Record<string, SkinInfo>): { name: str
 /* ---------- storefront ---------- */
 export async function getStorefront(t: RiotTokens, shard: string): Promise<StoreData> {
   const h = await pdHeaders(t);
-  const res = await fetch(`https://pd.${shard}.a.pvp.net/store/v3/storefront/${t.puuid}`, {
+  const res = await riotFetch(`https://pd.${shard}.a.pvp.net/store/v3/storefront/${t.puuid}`, {
     method: "POST",
     headers: h,
     body: "{}",
@@ -163,7 +164,7 @@ export async function getStorefront(t: RiotTokens, shard: string): Promise<Store
 /* ---------- wallet ---------- */
 export async function getWallet(t: RiotTokens, shard: string): Promise<WalletData> {
   const h = await pdHeaders(t);
-  const res = await fetch(`https://pd.${shard}.a.pvp.net/store/wallet/${t.puuid}`, { headers: h });
+  const res = await riotFetch(`https://pd.${shard}.a.pvp.net/store/wallet/${t.puuid}`, { headers: h });
   if (res.status === 401) throw new RiotError("token expired", "TOKEN_EXPIRED", 401);
   if (!res.ok) throw new RiotError("wallet failed: " + res.status, "WALLET_FAILED");
   const d = (await res.json()) as { Balances?: Record<string, number> };
@@ -182,7 +183,7 @@ export async function resolveNames(
   if (!ids.length) return out;
   try {
     const h = await pdHeaders(t);
-    const res = await fetch(`https://pd.${shard}.a.pvp.net/name-service/v2/players`, {
+    const res = await riotFetch(`https://pd.${shard}.a.pvp.net/name-service/v2/players`, {
       method: "PUT",
       headers: h,
       body: JSON.stringify(ids),
@@ -215,12 +216,12 @@ export async function getMatch(t: RiotTokens, shard: string, region: string): Pr
   const base = `https://glz-${region}-1.${shard}.a.pvp.net`;
   // agent select?
   try {
-    const r = await fetch(`${base}/pregame/v1/players/${t.puuid}`, { headers: h });
+    const r = await riotFetch(`${base}/pregame/v1/players/${t.puuid}`, { headers: h });
     if (r.status === 401) throw new RiotError("token expired", "TOKEN_EXPIRED", 401);
     if (r.ok) {
       const p = (await r.json()) as { MatchID?: string };
       if (p && p.MatchID) {
-        const m = await (await fetch(`${base}/pregame/v1/matches/${p.MatchID}`, { headers: h })).json();
+        const m = await (await riotFetch(`${base}/pregame/v1/matches/${p.MatchID}`, { headers: h })).json();
         return await parsePregame(t, shard, m);
       }
     }
@@ -229,12 +230,12 @@ export async function getMatch(t: RiotTokens, shard: string, region: string): Pr
   }
   // live match?
   try {
-    const r = await fetch(`${base}/core-game/v1/players/${t.puuid}`, { headers: h });
+    const r = await riotFetch(`${base}/core-game/v1/players/${t.puuid}`, { headers: h });
     if (r.status === 401) throw new RiotError("token expired", "TOKEN_EXPIRED", 401);
     if (r.ok) {
       const p = (await r.json()) as { MatchID?: string };
       if (p && p.MatchID) {
-        const m = await (await fetch(`${base}/core-game/v1/matches/${p.MatchID}`, { headers: h })).json();
+        const m = await (await riotFetch(`${base}/core-game/v1/matches/${p.MatchID}`, { headers: h })).json();
         return await parseLive(t, shard, m);
       }
     }
