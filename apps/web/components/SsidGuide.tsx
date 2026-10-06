@@ -6,16 +6,22 @@ export default function SsidGuide() {
       </summary>
       <ol className="guide-list">
         <li>
-          on your pc, open chrome and log into <b>playvalorant.com</b>
+          log in at <b>account.riotgames.com</b>
         </li>
         <li>
-          press <b>f12</b> → <b>application</b> tab → <b>cookies</b> →{" "}
-          <b>https://auth.riotgames.com</b>
+          go to <b>playvalorant.com</b>
         </li>
         <li>
-          find <b>ssid</b>, double-click its value and copy it
+          open devtools (<b>f12</b> or <b>ctrl+shift+i</b>), go to the{" "}
+          <b>application</b> tab
         </li>
-        <li>paste it below and hit connect</li>
+        <li>
+          expand <b>cookies</b>, select <b>https://auth.riotgames.com</b>
+        </li>
+        <li>
+          find <b>ssid</b>, double-click its value to copy it
+        </li>
+        <li>paste it here and hit connect</li>
       </ol>
       <p className="dim" style={{ marginTop: 10 }}>
         riot blocks password logins from websites, so we use your riot session

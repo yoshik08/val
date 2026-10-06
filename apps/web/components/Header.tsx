@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
 import ThemeToggle from "./ThemeToggle";
 import Button from "./ui/Button";
+import AccountSwitcher from "./AccountSwitcher";
 
 async function signOutAction() {
   "use server";
@@ -20,7 +21,7 @@ export default async function Header() {
         <div className="topbar-right">
           {session?.user && (
             <>
-              <span className="acct on">{session.user.email}</span>
+              <AccountSwitcher />
               <form action={signOutAction}>
                 <Button
                   variant="ghost"

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useApi } from "@/lib/use-api";
 import type { StoreData } from "@/lib/types";
 import Card from "../ui/Card";
-import Countdown from "../Countdown";
 import { OfferSkeleton } from "../ui/Skeleton";
 
 export default function NightMarket() {
@@ -16,10 +15,7 @@ export default function NightMarket() {
   if (status === "ok" && !nm) return null;
 
   return (
-    <Card
-      title="night market"
-      right={status === "ok" && nm ? <Countdown expiresIn={nm.expiresIn} /> : undefined}
-    >
+    <Card title="night market">
       {status === "loading" && (
         <div className="grid">
           {[0, 1, 2, 3, 4, 5].map((i) => (
