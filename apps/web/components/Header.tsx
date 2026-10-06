@@ -15,7 +15,7 @@ export default async function Header() {
   return (
     <header className="topbar">
       <div className="topbar-in">
-        <Link className="brand" href="/">
+        <Link className="brand" href="https://yoshik.xyz">
           val<span className="brand-dot">.</span>
         </Link>
         <div className="topbar-right">
