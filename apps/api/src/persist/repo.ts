@@ -101,7 +101,7 @@ class MongoRepo implements Repo {
       { userId, puuid },
       {
         $set: set,
-        $setOnInsert: { _id: id, id, userId, puuid, region: data.region, shard: data.shard, createdAt: Date.now() },
+        $setOnInsert: { _id: id, id, userId, puuid, createdAt: Date.now() },
       },
       { upsert: true, returnDocument: "after" }
     );
