@@ -18,7 +18,7 @@ export default async function Header() {
           val<span className="brand-dot">.</span>
         </Link>
         <div className="topbar-right">
-          {session?.user ? (
+          {session?.user && (
             <>
               <span className="acct on">{session.user.email}</span>
               <form action={signOutAction}>
@@ -31,15 +31,6 @@ export default async function Header() {
                 </Button>
               </form>
             </>
-          ) : (
-            <Link href="/login" style={{ textDecoration: "none" }}>
-              <Button
-                variant="ghost"
-                style={{ padding: "6px 14px", fontSize: 12 }}
-              >
-                log in
-              </Button>
-            </Link>
           )}
           <ThemeToggle />
         </div>
