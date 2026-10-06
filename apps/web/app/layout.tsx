@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Cursor from "@/components/Cursor";
+import Trail from "@/components/Trail";
 import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Cursor />
+          <Trail />
           <Header />
           <main className="wrap">{children}</main>
         </Providers>
