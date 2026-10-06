@@ -7,7 +7,7 @@ export default auth((req) => {
   // req.nextUrl.pathname includes basePath when one is configured; accept
   // both forms so the gate works regardless.
   const p = pathname.startsWith(BASE) ? pathname.slice(BASE.length) || "/" : pathname;
-  const needsAuth = p === "/dashboard" || p.startsWith("/dashboard/") || p === "/connect" || p.startsWith("/connect/");
+  const needsAuth = p === "/connect" || p.startsWith("/connect/");
 
   if (needsAuth && !req.auth) {
     const url = req.nextUrl.clone();
@@ -18,5 +18,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/val/dashboard/:path*", "/val/connect/:path*", "/dashboard/:path*", "/connect/:path*"],
+  matcher: ["/val/connect/:path*", "/connect/:path*"],
 };

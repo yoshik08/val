@@ -10,7 +10,7 @@ export default async function LoginPage({
 }) {
   const session = await auth();
   const { next } = await searchParams;
-  const callbackUrl = next && next.startsWith("/") ? next : "/dashboard";
+  const callbackUrl = next && next.startsWith("/") ? next : "/";
 
   if (session?.user) {
     redirect(callbackUrl);

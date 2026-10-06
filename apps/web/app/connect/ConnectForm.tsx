@@ -61,7 +61,7 @@ export default function ConnectForm() {
         setErr(data.error || `connect failed: ${res.status}`);
         return;
       }
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch {
       setErr("couldn't reach the server — is the api running?");

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import DashboardClient from "@/components/DashboardClient";
 
 const FEATURES = [
   {
@@ -25,6 +25,10 @@ const FEATURES = [
 
 export default async function Home() {
   const session = await auth();
+
+  if (session?.user) {
+    return <DashboardClient />;
+  }
 
   return (
     <>
@@ -62,15 +66,9 @@ export default async function Home() {
               sign in, paste your riot ssid once, and your shop shows up.
             </p>
           </div>
-          {session?.user ? (
-            <Link href="/dashboard">
-              <Button style={{ marginTop: 8 }}>open dashboard</Button>
-            </Link>
-          ) : (
-            <div style={{ marginTop: 8 }}>
-              <GoogleSignInButton label="log in with google" />
-            </div>
-          )}
+          <div style={{ marginTop: 8 }}>
+            <GoogleSignInButton label="log in with google" />
+          </div>
         </div>
       </Card>
     </>
