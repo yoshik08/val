@@ -12,7 +12,9 @@ export function systemRoutes(repo: Repo): Router {
   });
 
   r.get("/me", authUser, ah(async (req, res) => {
+    console.log("[me] googleId=", JSON.stringify(req.user!.id), "email=", JSON.stringify(req.user!.email));
     const user = await repo.upsertUserByGoogleId(req.user!.id, { email: req.user!.email });
+    console.log("[me] user.id=", user.id);
     const accounts = await repo.getAccountsByUser(user.id);
     res.json({
       user: { id: user.id, email: user.email, name: user.name, image: user.image },

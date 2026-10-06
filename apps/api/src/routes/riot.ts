@@ -24,7 +24,9 @@ export function riotRoutes(repo: Repo): Router {
   /* Connect (or re-validate) a riot account: reauth the jar, discover
      geo/shard, upsert the account, persist the rotated jar encrypted. */
   r.post("/connect", ah(async (req, res) => {
+    console.log("[connect] googleId=", JSON.stringify(req.user!.id), "email=", JSON.stringify(req.user!.email));
     const user = await repo.upsertUserByGoogleId(req.user!.id, { email: req.user!.email });
+    console.log("[connect] user.id=", user.id, "googleId=", user.googleId);
     const body = (req.body || {}) as { ssid?: unknown; cookies?: unknown };
     let jar: CookieJar = {};
     if (body.cookies && typeof body.cookies === "object") {
