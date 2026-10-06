@@ -44,6 +44,9 @@ if (DEV_AUTH) {
 }
 
 export const authConfig = {
+  // AUTH_URL=https://yoshik.xyz/val makes Auth.js derive basePath="/val",
+  // which breaks action parsing (routes live at /val/api/auth/*).
+  basePath: "/val/api/auth",
   providers,
   trustHost: true,
   callbacks: {
