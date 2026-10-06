@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Cursor from "@/components/Cursor";
 import Header from "@/components/Header";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "val — shop + live match",
@@ -30,9 +31,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Cursor />
-        <Header />
-        <main className="wrap">{children}</main>
+        <Providers>
+          <Cursor />
+          <Header />
+          <main className="wrap">{children}</main>
+        </Providers>
       </body>
     </html>
   );
