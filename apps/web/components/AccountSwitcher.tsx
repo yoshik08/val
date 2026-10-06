@@ -127,7 +127,8 @@ export default function AccountSwitcher() {
         }}
         data-hover
       >
-        {riotId} <span style={{ fontSize: 10 }}>▾</span>
+        {riotId}{" "}
+        <span style={{ fontSize: 13, color: "var(--accent)", lineHeight: 1 }}>▾</span>
       </button>
 
       {open && (
