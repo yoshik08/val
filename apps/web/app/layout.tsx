@@ -18,7 +18,7 @@ export default function RootLayout({
       <head>
         <link
           rel="preload"
-          href="/fonts/HankenGrotesk-400.woff2"
+          href="https://val.yoshik.xyz/fonts/HankenGrotesk-400.woff2"
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"
