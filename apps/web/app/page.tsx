@@ -14,10 +14,6 @@ const FEATURES = [
     body: "appears only when it's live — discount badges and discounted prices.",
   },
   {
-    title: "wallet",
-    body: "vp and radianite balances at a glance.",
-  },
-  {
     title: "live match",
     body: "agent select side, your locked agent, and the full teammate roster.",
   },

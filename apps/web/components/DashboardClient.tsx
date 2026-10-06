@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApi, isExpired } from "@/lib/use-api";
 import { bp } from "@/lib/basePath";
-import WalletBar from "@/components/store/WalletBar";
 import DailyStore from "@/components/store/DailyStore";
 import NightMarket from "@/components/store/NightMarket";
 import MatchPanel from "@/components/match/MatchPanel";
@@ -91,7 +90,6 @@ export default function DashboardClient() {
         </Banner>
       )}
 
-      {status === "ok" && accounts.length > 0 && <WalletBar />}
 
       {status === "ok" && accounts.length > 0 && <DailyStore />}
       {status === "ok" && accounts.length > 0 && <NightMarket />}

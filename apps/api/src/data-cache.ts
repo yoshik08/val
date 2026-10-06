@@ -1,16 +1,14 @@
 /* Data caches, keyed per account: store 5min, wallet 3min, match 15s. */
 
-type Kind = "store" | "wallet" | "match";
+type Kind = "store" | "match";
 
 const TTL: Record<Kind, number> = {
   store: 5 * 60 * 1000,
-  wallet: 3 * 60 * 1000,
   match: 15 * 1000,
 };
 
 const caches: Record<Kind, Map<string, { at: number; value: unknown }>> = {
   store: new Map(),
-  wallet: new Map(),
   match: new Map(),
 };
 

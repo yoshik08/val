@@ -4,8 +4,8 @@ import { authFlexible } from "../auth";
 import { resolveAccount } from "../resolve";
 import { sessionKey, withRiot } from "../session";
 import { cached } from "../data-cache";
-import { getMatch, getStorefront, getWallet } from "../riot/client";
-import { fixtureMatch, fixtureStore, fixtureWallet } from "../fixture";
+import { getMatch, getStorefront } from "../riot/client";
+import { fixtureMatch, fixtureStore } from "../fixture";
 import type { Repo } from "../persist/repo";
 
 export function dataRoutes(repo: Repo): Router {
@@ -39,23 +39,6 @@ export function dataRoutes(repo: Repo): Router {
         repo,
         account,
         async (t) => (t.fixture ? fixtureStore() : getStorefront(t, account.shard)),
-        jarOverride
-      )
-    );
-    res.json(data);
-  }));
-
-  r.get("/wallet", ah(async (req, res) => {
-    const { account, jarOverride } = await resolveAccount(req, repo);
-    if (!account) {
-      res.status(401).json({ error: "not connected", code: "NOT_CONNECTED" });
-      return;
-    }
-    const data = await cached("wallet", sessionKey(account.userId, account.puuid), () =>
-      withRiot(
-        repo,
-        account,
-        async (t) => (t.fixture ? fixtureWallet() : getWallet(t, account.shard)),
         jarOverride
       )
     );
