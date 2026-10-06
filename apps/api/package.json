@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jose": "^4.15.9",
+    "mongodb": "^6.12.0"
+  },
+  "description": "Valorant shop / wallet / match API \u2014 Express + TypeScript rebuild",
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.6.3"
+  },
+  "name": "val-api",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "start": "node dist/index.js",
+    "test:fixture": "tsx scripts/test-fixture.ts"
+  },
+  "version": "0.1.0"
+}
