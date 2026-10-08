@@ -20,6 +20,7 @@ export interface Repo {
   upsertAccount(userId: string, puuid: string, data: AccountUpsert): Promise<RiotAccountDoc>;
   getAccountById(id: string): Promise<RiotAccountDoc | null>;
   getAccountsByUser(userId: string): Promise<RiotAccountDoc[]>;
+  getAllAccounts(): Promise<RiotAccountDoc[]>;
   updateAccount(id: string, patch: Partial<RiotAccountDoc>): Promise<void>;
   deleteAccount(id: string): Promise<void>;
   deleteAccountsByUser(userId: string): Promise<void>;
@@ -117,6 +118,11 @@ class MongoRepo implements Repo {
     return arr.map((d) => this.clean<RiotAccountDoc>(d as unknown as Record<string, unknown>)!);
   }
 
+  async getAllAccounts(): Promise<RiotAccountDoc[]> {
+    const arr = await this.getDb().collection<any>("riotAccounts").find({}).toArray();
+    return arr.map((d) => this.clean<RiotAccountDoc>(d as unknown as Record<string, unknown>)!);
+  }
+
   async updateAccount(id: string, patch: Partial<RiotAccountDoc>): Promise<void> {
     const { id: _i, userId: _u, puuid: _p, ...rest } = patch;
     void _i;
@@ -200,6 +206,10 @@ class MemoryRepo implements Repo {
 
   async getAccountsByUser(userId: string): Promise<RiotAccountDoc[]> {
     return [...this.accounts.values()].filter((a) => a.userId === userId).map((a) => ({ ...a }));
+  }
+
+  async getAllAccounts(): Promise<RiotAccountDoc[]> {
+    return [...this.accounts.values()].map((a) => ({ ...a }));
   }
 
   async updateAccount(id: string, patch: Partial<RiotAccountDoc>): Promise<void> {

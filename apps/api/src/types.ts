@@ -18,6 +18,9 @@ export interface RiotAccountDoc {
   shard: string;
   /** AES-256-GCM encrypted cookie-jar JSON, base64url(iv|tag|ct) */
   encryptedCookies: string;
+  /** AES-256-GCM encrypted RiotTokens JSON — survives process restarts so
+      cold starts don't pay the full reauth chain. Refreshed on every reauth. */
+  encryptedTokens?: string;
   lastReauthAt?: number;
   lastError?: string;
   createdAt: number;

@@ -10,6 +10,8 @@ export const config = {
   encryptionKeyHex: process.env.ENCRYPTION_KEY || "",
   mongoUri: process.env.MONGODB_URI || "",
   fixture: process.env.VAL_FIXTURE === "true",
+  /** shared secret guarding /api/internal/* — set on Render, sent by the refresh cron */
+  internalSecret: process.env.INTERNAL_SECRET || "",
   corsOrigins: Array.from(
     new Set(
       (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : [])

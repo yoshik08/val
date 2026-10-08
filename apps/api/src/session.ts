@@ -42,9 +42,13 @@ export function clearUserSessions(userId: string): void {
   }
 }
 
-/* Fresh tokens for one account. Reauths through that account's own jar when
-   the cached tokens are missing/expired, and persists the rotated jar back
-   into the same account's encryptedCookies. */
+/* Fresh tokens for one account. Order of resolution:
+   1. in-memory cache (fast path)
+   2. Mongo-persisted encrypted tokens (survives cold starts / restarts)
+   3. full cookieReauth through the account's jar (slow Riot chain), then
+      persist the rotated jar AND the fresh tokens back into the account doc.
+   expiresAt already carries the 5-min early-refresh buffer, so a stored token
+   that passes the Date.now() check is safe to use immediately. */
 export async function getSession(
   repo: Repo,
   account: RiotAccountDoc,
@@ -53,11 +57,23 @@ export async function getSession(
   const k = sessionKey(account.userId, account.puuid);
   const c = cache.get(k);
   if (c && c.expiresAt > Date.now()) return c.tokens;
+  if (!jarOverride && account.encryptedTokens) {
+    try {
+      const stored = JSON.parse(dec(account.encryptedTokens)) as RiotTokens;
+      if (stored && stored.expiresAt > Date.now()) {
+        set(k, stored);
+        return stored;
+      }
+    } catch {
+      /* corrupted payload — fall through to reauth */
+    }
+  }
   const jar: CookieJar = jarOverride ?? (JSON.parse(dec(account.encryptedCookies)) as CookieJar);
   try {
     const { tokens, jar: rotated } = await cookieReauth(jar);
     await repo.updateAccount(account.id, {
       encryptedCookies: enc(JSON.stringify(rotated)),
+      encryptedTokens: enc(JSON.stringify(tokens)),
       lastReauthAt: Date.now(),
       lastError: "",
     });
